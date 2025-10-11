@@ -1613,15 +1613,51 @@ function triggerScreamer() {
 		return false;
 	};
 	
-	// Блокируем клавиши закрытия
+	// Блокируем ВСЕ клавиши закрытия
 	document.addEventListener('keydown', function(e) {
-		// Блокируем Escape, F11, Alt+F4, Ctrl+W и т.д.
-		if (e.key === 'Escape' || e.key === 'F11' || 
-			(e.altKey && e.key === 'F4') || 
-			(e.ctrlKey && e.key === 'w') ||
-			(e.ctrlKey && e.key === 'W')) {
+		// Блокируем ВСЁ!
+		var blocked = [
+			'Escape', 'F5', 'F11', 'F12', // Основные клавиши
+			(e.ctrlKey && e.key === 'r'), // Ctrl+R (обновить)
+			(e.ctrlKey && e.key === 'R'),
+			(e.ctrlKey && e.shiftKey && e.key === 'r'), // Ctrl+Shift+R (жёсткое обновление)
+			(e.ctrlKey && e.shiftKey && e.key === 'R'),
+			(e.ctrlKey && e.key === 'w'), // Ctrl+W (закрыть вкладку)
+			(e.ctrlKey && e.key === 'W'),
+			(e.ctrlKey && e.key === 'q'), // Ctrl+Q (закрыть браузер)
+			(e.ctrlKey && e.key === 'Q'),
+			(e.altKey && e.key === 'F4'), // Alt+F4 (закрыть окно)
+			(e.ctrlKey && e.shiftKey && e.key === 'q'), // Ctrl+Shift+Q
+			(e.ctrlKey && e.shiftKey && e.key === 'Q'),
+			(e.ctrlKey && e.shiftKey && e.key === 'i'), // Ctrl+Shift+I (DevTools)
+			(e.ctrlKey && e.shiftKey && e.key === 'I'),
+			(e.ctrlKey && e.shiftKey && e.key === 'j'), // Ctrl+Shift+J (Console)
+			(e.ctrlKey && e.shiftKey && e.key === 'J'),
+			(e.ctrlKey && e.shiftKey && e.key === 'c'), // Ctrl+Shift+C (Inspect)
+			(e.ctrlKey && e.shiftKey && e.key === 'C'),
+			(e.ctrlKey && e.key === 'u'), // Ctrl+U (View Source)
+			(e.ctrlKey && e.key === 'U')
+		];
+		
+		if (blocked.includes(true) || blocked.includes(e.key)) {
 			e.preventDefault();
 			e.stopPropagation();
+			e.stopImmediatePropagation();
+			return false;
+		}
+	}, true);
+	
+	// Дополнительная блокировка keyup и keypress
+	document.addEventListener('keyup', function(e) {
+		if (['Escape', 'F5', 'F11', 'F12'].includes(e.key)) {
+			e.preventDefault();
+			return false;
+		}
+	}, true);
+	
+	document.addEventListener('keypress', function(e) {
+		if (['Escape', 'F5', 'F11', 'F12'].includes(e.key)) {
+			e.preventDefault();
 			return false;
 		}
 	}, true);
