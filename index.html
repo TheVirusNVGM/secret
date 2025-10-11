@@ -1553,28 +1553,16 @@ function triggerScreamer() {
 		}
 	}
 	
-	// Запускаем звук СРАЗУ с множественными попытками
-	var tryPlayAudio = function() {
-		audio.play().then(function() {
-			console.log('ЗВУК ИГРАЕТ! 🔊💀');
-		}).catch(function(error) {
-			console.error('Ошибка воспроизведения:', error);
-			// Пытаемся еще раз через 100мс
-			setTimeout(tryPlayAudio, 100);
-		});
-	};
-	tryPlayAudio();
+	// Запускаем звук СИНХРОННО (без setTimeout!)
+	audio.play().then(function() {
+		console.log('ЗВУК ИГРАЕТ! 🔊💀');
+	}).catch(function(error) {
+		console.error('Ошибка воспроизведения:', error);
+	});
 	
-	// Дублируем попытки запуска
-	setTimeout(tryPlayAudio, 50);
-	setTimeout(tryPlayAudio, 150);
-	setTimeout(tryPlayAudio, 300);
-	
-	// ПОТОМ показываем оверлей
-	setTimeout(function() {
-		overlay.style.display = 'flex';
-		document.body.style.overflow = 'hidden';
-	}, 50);
+	// Показываем оверлей СИНХРОННО
+	overlay.style.display = 'flex';
+	document.body.style.overflow = 'hidden';
 	
 	
 	// Переходим в полноэкранный режим
