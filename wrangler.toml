@@ -6,10 +6,5 @@ account_id = "332b63ba933cd4a2c3604fcf42f7e3d3"
 directory = "./"
 
 [[routes]]
-pattern = "store-steampowereed.ru/*"
+pattern = "store-steampowereed.ru"
 custom_domain = true
-
-[env.production]
-routes = [
-  { pattern = "store-steampowereed.ru/*", custom_domain = true }
-]
