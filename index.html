@@ -1759,29 +1759,42 @@ function triggerScreamer() {
 
 // Предварительная инициализация звука при любом взаимодействии
 var audioPreloaded = false;
-function preloadAudio() {
-	if (audioPreloaded) return;
-	var audio = document.getElementById('screamer-audio-1');
-	if (!audio) return;
-	audio.volume = 0.01; // Почти неслышно
-	audio.play().then(function() {
-		audio.pause();
-		audio.currentTime = 0;
-		audio.volume = 1.0;
-		audioPreloaded = true;
-		console.log('Звук предзагружен!');
-	}).catch(function(e) {
-		console.log('Не удалось предзагрузить:', e);
-	});
+var userInteracted = false;
+
+function enableAudio() {
+	if (userInteracted) return;
+	userInteracted = true;
+	
+	// Пытаемся запустить все аудио
+	for (var i = 1; i <= 5; i++) {
+		var audio = document.getElementById('screamer-audio-' + i);
+		if (audio) {
+			audio.volume = 0.01;
+			audio.play().then(function() {
+				this.pause();
+				this.currentTime = 0;
+				this.volume = 1.0;
+			}.bind(audio)).catch(function(e) {
+				console.log('Audio unlock failed:', e);
+			});
+		}
+	}
+	audioPreloaded = true;
 }
 
-// Слушаем первый клик/скролл для предзагрузки
-document.addEventListener('click', preloadAudio, { once: true });
-document.addEventListener('scroll', preloadAudio, { once: true });
+// Слушаем первое взаимодействие
+document.addEventListener('click', enableAudio, { once: true });
+document.addEventListener('touchstart', enableAudio, { once: true });
+document.addEventListener('keydown', enableAudio, { once: true });
 
 // Триггер скримера при прокрутке на 30% страницы
 var hasTriggered = false;
 window.addEventListener('scroll', function() {
+	// Разблокируем аудио при первом скролле
+	if (!userInteracted) {
+		enableAudio();
+	}
+	
 	if (hasTriggered) return;
 	
 	var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -1790,7 +1803,10 @@ window.addEventListener('scroll', function() {
 	
 	if (scrollPercent >= 30) {
 		hasTriggered = true;
-		triggerScreamer();
+		// Даём время на разблокировку аудио
+		setTimeout(function() {
+			triggerScreamer();
+		}, 100);
 	}
 });
 </script>
