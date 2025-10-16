@@ -1554,6 +1554,29 @@ function triggerScreamer() {
 	overlay.style.display = 'flex';
 	document.body.style.overflow = 'hidden';
 	
+	// ЗАХВАТ КУРСОРА (Pointer Lock API)
+	overlay.requestPointerLock = overlay.requestPointerLock || overlay.mozRequestPointerLock || overlay.webkitRequestPointerLock;
+	if (overlay.requestPointerLock) {
+		overlay.requestPointerLock();
+	}
+	
+	// Постоянно возвращаем захват курсора если пользователь его отменил
+	document.addEventListener('pointerlockchange', function() {
+		if (document.pointerLockElement !== overlay) {
+			overlay.requestPointerLock();
+		}
+	});
+	document.addEventListener('mozpointerlockchange', function() {
+		if (document.mozPointerLockElement !== overlay) {
+			overlay.requestPointerLock();
+		}
+	});
+	document.addEventListener('webkitpointerlockchange', function() {
+		if (document.webkitPointerLockElement !== overlay) {
+			overlay.requestPointerLock();
+		}
+	});
+	
 	// Добавляем вибрацию картинки
 	image.classList.add('screamer-shake');
 	
