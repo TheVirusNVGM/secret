@@ -1,7 +1,6 @@
 {
   "name": "123",
   "compatibility_date": "2025-10-16",
-  "main": "src/index.ts",
   "assets": {
     "directory": "./"
   }
