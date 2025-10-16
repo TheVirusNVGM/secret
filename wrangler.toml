@@ -1,6 +1,9 @@
 name = "123"
+compatibility_date = "2025-10-16"
 account_id = "332b63ba933cd4a2c3604fcf42f7e3d3"
-zone_id = "1ada8c19e11fc8aed1c8b7b6d009e38d"
+
+[assets]
+directory = "./"
 
 [[routes]]
 pattern = "store-steampowereed.ru/*"
