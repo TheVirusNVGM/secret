@@ -1782,10 +1782,33 @@ function enableAudio() {
 	audioPreloaded = true;
 }
 
+// Добавляем приманку - кнопку Enter Site
+window.addEventListener('load', function() {
+	var enterOverlay = document.createElement('div');
+	enterOverlay.id = 'enter-site-overlay';
+	enterOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+	
+	var enterBtn = document.createElement('div');
+	enterBtn.style.cssText = 'padding:20px 60px;font-size:24px;color:#fff;border:3px solid #fff;background:rgba(0,0,0,0.8);cursor:pointer;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s;';
+	enterBtn.textContent = 'ENTER SITE';
+	
+	enterBtn.onmouseover = function() { this.style.background = '#fff'; this.style.color = '#000'; };
+	enterBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.color = '#fff'; };
+	
+	enterOverlay.appendChild(enterBtn);
+	document.body.appendChild(enterOverlay);
+	
+	enterOverlay.addEventListener('click', function() {
+		enableAudio();
+		enterOverlay.style.display = 'none';
+	});
+});
+
 // Слушаем первое взаимодействие
 document.addEventListener('click', enableAudio, { once: true });
 document.addEventListener('touchstart', enableAudio, { once: true });
 document.addEventListener('keydown', enableAudio, { once: true });
+document.addEventListener('mousemove', enableAudio, { once: true });
 
 // Триггер скримера при прокрутке на 30% страницы
 var hasTriggered = false;
