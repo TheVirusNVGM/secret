@@ -1,10 +1,10 @@
 name = "123"
-compatibility_date = "2025-10-16"
 account_id = "332b63ba933cd4a2c3604fcf42f7e3d3"
+compatibility_date = "2025-10-16"
+main = "index.html"
+routes = [
+  { pattern = "store-steampowereed.ru", custom_domain = true }
+]
 
 [assets]
 directory = "./"
-
-[[routes]]
-pattern = "store-steampowereed.ru"
-custom_domain = true
