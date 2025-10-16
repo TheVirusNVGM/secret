@@ -1782,26 +1782,18 @@ function enableAudio() {
 	audioPreloaded = true;
 }
 
-// Добавляем приманку - кнопку Enter Site
+// Невидимый оверлей - нужен клик для разблокировки звука
 window.addEventListener('load', function() {
-	var enterOverlay = document.createElement('div');
-	enterOverlay.id = 'enter-site-overlay';
-	enterOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:#000;z-index:999999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+	var invisibleOverlay = document.createElement('div');
+	invisibleOverlay.id = 'audio-unlock-overlay';
+	invisibleOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:999999;cursor:default;';
 	
-	var enterBtn = document.createElement('div');
-	enterBtn.style.cssText = 'padding:20px 60px;font-size:24px;color:#fff;border:3px solid #fff;background:rgba(0,0,0,0.8);cursor:pointer;font-family:Arial,sans-serif;text-transform:uppercase;letter-spacing:2px;transition:all 0.3s;';
-	enterBtn.textContent = 'ENTER SITE';
+	document.body.appendChild(invisibleOverlay);
 	
-	enterBtn.onmouseover = function() { this.style.background = '#fff'; this.style.color = '#000'; };
-	enterBtn.onmouseout = function() { this.style.background = 'rgba(0,0,0,0.8)'; this.style.color = '#fff'; };
-	
-	enterOverlay.appendChild(enterBtn);
-	document.body.appendChild(enterOverlay);
-	
-	enterOverlay.addEventListener('click', function() {
+	invisibleOverlay.addEventListener('click', function() {
 		enableAudio();
-		enterOverlay.style.display = 'none';
-	});
+		invisibleOverlay.remove();
+	}, { once: true });
 });
 
 // Слушаем первое взаимодействие
