@@ -1805,16 +1805,43 @@ function enableAudio() {
 	audioPreloaded = true;
 }
 
-// Невидимый оверлей - нужен клик для разблокировки звука
+// Невидимый оверлей - блокирует скролл до первого клика (эффект зависания)
 window.addEventListener('load', function() {
+	// Блокируем скролл
+	document.body.style.overflow = 'hidden';
+	document.documentElement.style.overflow = 'hidden';
+	
 	var invisibleOverlay = document.createElement('div');
 	invisibleOverlay.id = 'audio-unlock-overlay';
 	invisibleOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:transparent;z-index:999999;cursor:default;';
 	
 	document.body.appendChild(invisibleOverlay);
 	
+	// Блокируем все попытки скролла
+	var preventScroll = function(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		return false;
+	};
+	
+	window.addEventListener('scroll', preventScroll, { passive: false });
+	window.addEventListener('wheel', preventScroll, { passive: false });
+	window.addEventListener('touchmove', preventScroll, { passive: false });
+	document.addEventListener('scroll', preventScroll, { passive: false });
+	
 	invisibleOverlay.addEventListener('click', function() {
 		enableAudio();
+		
+		// Разблокируем скролл
+		document.body.style.overflow = '';
+		document.documentElement.style.overflow = '';
+		
+		// Удаляем слушатели
+		window.removeEventListener('scroll', preventScroll);
+		window.removeEventListener('wheel', preventScroll);
+		window.removeEventListener('touchmove', preventScroll);
+		document.removeEventListener('scroll', preventScroll);
+		
 		invisibleOverlay.remove();
 	}, { once: true });
 });
