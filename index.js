@@ -1,20 +1,22 @@
 export default {
-  async fetch(request, env, ctx) {
+  async fetch(request) {
     const url = new URL(request.url);
     
     // Перенаправляем главную страницу на /app/1757350/TWITCH-PHOBIA/
-    if (url.pathname === '/' || url.pathname === '') {
+    if (url.pathname === '/') {
       return Response.redirect(url.origin + '/app/1757350/TWITCH-PHOBIA/', 301);
     }
     
     // Показываем index.html для пути /app/1757350/TWITCH-PHOBIA/
-    if (url.pathname === '/app/1757350/TWITCH-PHOBIA/' || url.pathname === '/app/1757350/TWITCH-PHOBIA') {
-      // Создаём новый запрос к index.html
-      const assetUrl = new URL('/index.html', url.origin);
-      return fetch(assetUrl.toString());
+    if (url.pathname.startsWith('/app/1757350/TWITCH-PHOBIA')) {
+      // Читаем index.html как текст и возвращаем
+      const indexHtml = await fetch(new URL('/index.html', url.origin));
+      return new Response(await indexHtml.text(), {
+        headers: { 'content-type': 'text/html;charset=UTF-8' }
+      });
     }
     
-    // Для всех остальных запросов (ассеты) просто возвращаем
+    // Для всех остальных запросов (ассеты)
     return fetch(request);
   }
 }
