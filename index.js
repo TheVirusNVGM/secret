@@ -1,5 +1,5 @@
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     
     // Перенаправляем главную страницу на /app/1757350/TWITCH-PHOBIA/
@@ -9,10 +9,12 @@ export default {
     
     // Показываем index.html для пути /app/1757350/TWITCH-PHOBIA/
     if (url.pathname === '/app/1757350/TWITCH-PHOBIA/' || url.pathname === '/app/1757350/TWITCH-PHOBIA') {
-      return env.ASSETS.fetch(new URL('/index.html', url.origin));
+      // Создаём новый запрос к index.html
+      const assetUrl = new URL('/index.html', url.origin);
+      return fetch(assetUrl.toString());
     }
     
-    // Для всех остальных запросов используем assets
-    return env.ASSETS.fetch(request);
+    // Для всех остальных запросов (ассеты) просто возвращаем
+    return fetch(request);
   }
 }
