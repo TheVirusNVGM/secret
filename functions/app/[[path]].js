@@ -3,12 +3,31 @@ export async function onRequest(context) {
   const { request, env, params } = context;
   const url = new URL(request.url);
   
-  // Парсим путь: /app/{id}/{name}/
-  const pathParts = params.path || '';
-  const pathMatch = pathParts.match(/^(\d+)\/([^\/]+)\/?$/);
+  // Парсим путь из URL напрямую
+  const pathname = url.pathname;
+  // Убираем /app/ из начала пути
+  const pathAfterApp = pathname.replace(/^\/app\//, '');
+  
+  // Парсим путь: {id}/{name}/
+  const pathMatch = pathAfterApp.match(/^(\d+)\/([^\/]+)\/?$/);
   
   if (!pathMatch) {
-    return new Response('Invalid game path', { status: 404 });
+    // Пробуем также без слеша в конце
+    const pathMatch2 = pathAfterApp.match(/^(\d+)\/(.+)$/);
+    if (pathMatch2) {
+      const gameId = pathMatch2[1];
+      const gameSlug = pathMatch2[2];
+      
+      const gameData = await getGameData(gameId, env);
+      if (!gameData) {
+        return new Response('Game not found', { status: 404 });
+      }
+      const html = generateGamePage(gameData, gameId, gameSlug);
+      return new Response(html, {
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
+    return new Response('Invalid game path: ' + pathname, { status: 404 });
   }
   
   const gameId = pathMatch[1];
@@ -20,7 +39,7 @@ export async function onRequest(context) {
   const gameData = await getGameData(gameId, env);
   
   if (!gameData) {
-    return new Response('Game not found', { status: 404 });
+    return new Response('Game not found for ID: ' + gameId, { status: 404 });
   }
   
   // Генерируем HTML страницы игры
