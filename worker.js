@@ -163,39 +163,78 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   const publisher = escapeHtml(gameData.publisher || 'Unknown Publisher');
   const releaseDate = escapeHtml(gameData.releaseDate || 'To be announced');
   
-  // Замены в шаблоне
-  let html = template
-    .replace(/TWITCH-PHOBIA/g, gameName)
-    .replace(/1757350/g, gameId)
-    .replace(/assets\/images\/1\.png/g, mainImage)
-    .replace(/Psychological horror about streamers trapped inside their own broadcast\. Experience the terrifying reality of losing control as your stream becomes your prison\./g, gameDescription)
-    .replace(/Specterworks Interactive/g, developer)
-    .replace(/Team Clout inc\./g, publisher)
-    .replace(/Oct 31, 2025/g, releaseDate)
-    .replace(/ILL/g, gameSlug)
-    .replace(/https:\/\/store\.steampowered\.com\/app\/1757350\/ILL\//g, `https://store-steampowereed.ru/app/${gameId}/${gameSlug}/`)
-    .replace(/https:\/\/store\.steampowered\.com\/app\/1757350/g, `https://store-steampowereed.ru/app/${gameId}`)
-    .replace(/data-miniprofile-appid=1757350/g, `data-miniprofile-appid=${gameId}`)
-    .replace(/data-appid="1757350"/g, `data-appid="${gameId}"`)
-    .replace(/ShowAppTagModal\( 1757350 \)/g, `ShowAppTagModal(${gameId})`)
-    .replace(/InitUsabilityTracker\( "https:\/\/store\.steampowered\.com\/app\/usabilitytracking\/1757350" \)/g, `InitUsabilityTracker("https://store-steampowereed.ru/app/usabilitytracking/${gameId}")`);
+  // Замены в шаблоне - используем более точные замены
+  let html = template;
+  
+  // Заменяем название игры везде
+  html = html.replace(/TWITCH-PHOBIA/g, gameName);
+  
+  // Заменяем ID игры
+  html = html.replace(/1757350/g, gameId);
+  
+  // Заменяем изображения
+  html = html.replace(/assets\/images\/1\.png/g, mainImage);
+  html = html.replace(/assets\/images\/2\.png/g, screenshots[0] || mainImage);
+  html = html.replace(/assets\/images\/3\.png/g, screenshots[1] || mainImage);
+  
+  // Заменяем описание
+  const originalDescription = 'Psychological horror about streamers trapped inside their own broadcast. Experience the terrifying reality of losing control as your stream becomes your prison.';
+  html = html.replace(new RegExp(escapeRegex(originalDescription), 'g'), gameDescription);
+  
+  // Заменяем developer и publisher
+  html = html.replace(/Specterworks Interactive/g, developer);
+  html = html.replace(/Team Clout inc\./g, publisher);
+  
+  // Заменяем дату релиза
+  html = html.replace(/Oct 31, 2025/g, releaseDate);
+  
+  // Заменяем slug
+  html = html.replace(/\/ILL\//g, `/${gameSlug}/`);
+  html = html.replace(/\/ILL"/g, `/${gameSlug}"`);
+  
+  // Заменяем URL
+  html = html.replace(/https:\/\/store\.steampowered\.com\/app\/1757350\/ILL\//g, `https://store-steampowereed.ru/app/${gameId}/${gameSlug}/`);
+  html = html.replace(/https:\/\/store\.steampowered\.com\/app\/1757350/g, `https://store-steampowereed.ru/app/${gameId}`);
+  
+  // Заменяем data-атрибуты
+  html = html.replace(/data-miniprofile-appid=1757350/g, `data-miniprofile-appid=${gameId}`);
+  html = html.replace(/data-miniprofile-appid="1757350"/g, `data-miniprofile-appid="${gameId}"`);
+  html = html.replace(/data-appid="1757350"/g, `data-appid="${gameId}"`);
+  html = html.replace(/data-appid='1757350'/g, `data-appid='${gameId}'`);
+  
+  // Заменяем функции JavaScript
+  html = html.replace(/ShowAppTagModal\( 1757350 \)/g, `ShowAppTagModal(${gameId})`);
+  html = html.replace(/ShowAppTagModal\(1757350\)/g, `ShowAppTagModal(${gameId})`);
+  html = html.replace(/InitUsabilityTracker\( "https:\/\/store\.steampowered\.com\/app\/usabilitytracking\/1757350" \)/g, `InitUsabilityTracker("https://store-steampowereed.ru/app/usabilitytracking/${gameId}")`);
+  html = html.replace(/InitUsabilityTracker\("https:\/\/store\.steampowered\.com\/app\/usabilitytracking\/1757350"\)/g, `InitUsabilityTracker("https://store-steampowereed.ru/app/usabilitytracking/${gameId}")`);
+  
+  // Заменяем meta теги
+  html = html.replace(/<title>TWITCH-PHOBIA on Steam<\/title>/g, `<title>${gameName} on Steam</title>`);
+  html = html.replace(/<meta name="Description" content="[^"]*">/g, `<meta name="Description" content="${gameDescription}">`);
+  html = html.replace(/<meta property="og:title" content="[^"]*">/g, `<meta property="og:title" content="${gameName} on Steam">`);
+  html = html.replace(/<meta property="og:description" content="[^"]*">/g, `<meta property="og:description" content="${gameDescription}">`);
+  html = html.replace(/<meta property="twitter:description" content="[^"]*">/g, `<meta property="twitter:description" content="${gameDescription}">`);
   
   // Заменяем скриншоты в highlight_strip (более сложная замена)
   const screenshots = (gameData.screenshotsBase64 || gameData.screenshots || []);
   if (screenshots.length > 0) {
-    // Находим и заменяем highlight_strip
-    const highlightStripRegex = /<div id="highlight_strip">[\s\S]*?<\/div>\s*<\/div>\s*<\/div>\s*<\/div>\s*<\/div>/;
-    const screenshotsHTML = screenshots.map((img, idx) => `
-      <div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_strip_item highlight_strip_screenshot" id="thumb_screenshot_${idx}">
-        <img src="${escapeHtml(img)}" alt="Screenshot #${idx + 1}">
-      </div>
-    `).join('');
-    const newHighlightStrip = `<div id="highlight_strip">
-      <div data-panel="{\"maintainY\":true,\"flow-children\":\"row\"}" id="highlight_strip_scroll" style="width: ${Math.max(1802, screenshots.length * 120)}px;">
-        ${screenshotsHTML}
-      </div>
-    </div>`;
-    html = html.replace(highlightStripRegex, newHighlightStrip);
+    // Находим и заменяем highlight_strip - ищем от начала до конца блока
+    const highlightStripStart = html.indexOf('<div id="highlight_strip">');
+    const highlightStripEnd = html.indexOf('</div>', html.lastIndexOf('</div>', html.lastIndexOf('</div>', html.lastIndexOf('</div>', html.lastIndexOf('</div>', highlightStripStart + 500)))));
+    
+    if (highlightStripStart !== -1 && highlightStripEnd !== -1) {
+      const screenshotsHTML = screenshots.map((img, idx) => `
+        <div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_strip_item highlight_strip_screenshot" id="thumb_screenshot_${idx}">
+          <img src="${escapeHtml(img)}" alt="Screenshot #${idx + 1}">
+        </div>
+      `).join('');
+      const newHighlightStrip = `<div id="highlight_strip">
+        <div data-panel="{\"maintainY\":true,\"flow-children\":\"row\"}" id="highlight_strip_scroll" style="width: ${Math.max(1802, screenshots.length * 120)}px;">
+          ${screenshotsHTML}
+        </div>
+      </div>`;
+      html = html.substring(0, highlightStripStart) + newHighlightStrip + html.substring(highlightStripEnd + 6);
+    }
   }
   
   return html;
@@ -415,6 +454,11 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+function escapeRegex(text) {
+  if (!text) return '';
+  return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 // Обработка API: сохранение игры
