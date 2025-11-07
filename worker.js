@@ -171,6 +171,7 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   const developer = escapeHtml(gameData.developer || 'Unknown Developer');
   const publisher = escapeHtml(gameData.publisher || 'Unknown Publisher');
   const releaseDate = escapeHtml(gameData.releaseDate || 'To be announced');
+  const screenshots = (gameData.screenshotsBase64 || gameData.screenshots || []);
   
   // Замены в шаблоне - используем более точные замены
   let html = template;
@@ -183,8 +184,12 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   
   // Заменяем изображения
   html = html.replace(/assets\/images\/1\.png/g, mainImage);
-  html = html.replace(/assets\/images\/2\.png/g, screenshots[0] || mainImage);
-  html = html.replace(/assets\/images\/3\.png/g, screenshots[1] || mainImage);
+  if (screenshots.length > 0) {
+    html = html.replace(/assets\/images\/2\.png/g, screenshots[0] || mainImage);
+    if (screenshots.length > 1) {
+      html = html.replace(/assets\/images\/3\.png/g, screenshots[1] || mainImage);
+    }
+  }
   
   // Заменяем описание
   const originalDescription = 'Psychological horror about streamers trapped inside their own broadcast. Experience the terrifying reality of losing control as your stream becomes your prison.';
