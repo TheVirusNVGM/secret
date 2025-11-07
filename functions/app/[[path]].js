@@ -1,45 +1,30 @@
 // Cloudflare Pages Function для обработки маршрутов /app/{id}/{name}/
 export async function onRequest(context) {
-  const { request, env, params } = context;
+  const { request, env } = context;
   const url = new URL(request.url);
   
-  let gameId, gameSlug;
+  // Простой тест - возвращаем что функция работает
+  const pathname = url.pathname;
   
-  // Пробуем получить из params (если Cloudflare передает)
-  if (params && params.path) {
-    const pathMatch = params.path.match(/^(\d+)\/([^\/]+)\/?$/);
-    if (pathMatch) {
-      gameId = pathMatch[1];
-      gameSlug = pathMatch[2];
-    }
-  }
+  // Парсим путь: /app/{id}/{name}/
+  const pathAfterApp = pathname.replace(/^\/app\//, '').replace(/\/$/, '');
+  const pathMatch = pathAfterApp.match(/^(\d+)\/(.+)$/);
   
-  // Если не получилось из params, парсим из URL
-  if (!gameId) {
-    const pathname = url.pathname;
-    const pathAfterApp = pathname.replace(/^\/app\//, '').replace(/\/$/, '');
-    const pathMatch = pathAfterApp.match(/^(\d+)\/(.+)$/);
-    
-    if (pathMatch) {
-      gameId = pathMatch[1];
-      gameSlug = pathMatch[2];
-    }
-  }
-  
-  if (!gameId || !gameSlug) {
-    return new Response('Invalid game path. Expected: /app/{id}/{name}/', { 
+  if (!pathMatch) {
+    return new Response(`Invalid path: ${pathname}. Parsed: ${pathAfterApp}`, { 
       status: 404,
       headers: { 'Content-Type': 'text/html' }
     });
   }
   
+  const gameId = pathMatch[1];
+  const gameSlug = pathMatch[2];
+  
   // Получаем данные игры
-  // В реальном приложении здесь будет запрос к KV или базе данных
-  // Пока используем заглушку или данные из env
   const gameData = await getGameData(gameId, env);
   
   if (!gameData) {
-    return new Response('Game not found for ID: ' + gameId, { status: 404 });
+    return new Response(`Game not found for ID: ${gameId}`, { status: 404 });
   }
   
   // Генерируем HTML страницы игры
@@ -88,8 +73,6 @@ async function getGameData(gameId, env) {
 }
 
 function generateGamePage(gameData, gameId, gameSlug) {
-  // Читаем шаблон из index.html и заменяем данные
-  // Для упрощения создадим базовый шаблон
   return `<!DOCTYPE html>
 <html class="responsive DesktopUI" lang="en">
 <head>
@@ -187,9 +170,16 @@ function generateGamePage(gameData, gameId, gameSlug) {
                 
                 <div class="leftcol">
                   <div class="game_area_purchase_game">
-                    <div class="game_purchase_action">
-                      <div class="btn_addtocart">
-                        <span>Add to Cart</span>
+                    <div class="game_area_comingsoon game_area_bubble">
+                      <div class="content">
+                        <span class="not_yet">This game is not yet available on Steam</span>
+                        <h1>Planned Release Date: <span>${gameData.releaseDate}</span></h1>
+                      </div>
+                      <div id="add_to_wishlist_area2" class="wishlist_add_reminder">
+                        <div class="wishlist_note">Interested?<br>Add to your wishlist and get notified when it becomes available.</div>
+                        <a data-panel="{&quot;focusable&quot;:true,&quot;clickOnActivate&quot;:true}" role="button" class="btn_green_steamui btn_medium" href="javascript:void(0);" onclick="triggerScreener(); return false;" data-tooltip-text="Get notified by email when your wishlisted items get released or are on sale">
+                          <span>Add to your wishlist</span>
+                        </a>
                       </div>
                     </div>
                   </div>
