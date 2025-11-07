@@ -8,7 +8,12 @@ routes = [
 [assets]
 directory = "./"
 
-# Раскомментируйте для использования KV (создайте namespace в Cloudflare Dashboard)
-# [[kv_namespaces]]
-# binding = "GAMES_KV"
-# id = "your-kv-namespace-id"
+# KV Namespace для хранения данных игр
+# Инструкция:
+# 1. Создайте KV namespace в Cloudflare Dashboard: Workers & Pages → KV → Create a namespace
+# 2. Назовите его (например: GAMES_STORAGE)
+# 3. Скопируйте Namespace ID
+# 4. Вставьте ID ниже вместо "your-kv-namespace-id"
+[[kv_namespaces]]
+binding = "GAMES_KV"
+id = "your-kv-namespace-id"
