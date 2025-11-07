@@ -5,6 +5,8 @@ routes = [
   { pattern = "store-steampowereed.ru", custom_domain = true }
 ]
 
+main = "worker.js"
+
 [assets]
 directory = "./"
 
