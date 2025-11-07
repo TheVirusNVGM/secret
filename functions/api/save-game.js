@@ -26,22 +26,31 @@ export async function onRequestPost(context) {
     }
     
     // Сохраняем в KV если доступно
+    let savedToKV = false;
     if (env && env.GAMES_KV) {
-      await env.GAMES_KV.put(`game:${gameData.id}`, JSON.stringify(gameData));
-    }
-    
-    // Также сохраняем список всех игр
-    if (env && env.GAMES_KV) {
-      const gamesList = await env.GAMES_KV.get('games:list');
-      let games = gamesList ? JSON.parse(gamesList) : [];
-      // Удаляем старую версию если есть
-      games = games.filter(g => g.id !== gameData.id);
-      games.push({ id: gameData.id, name: gameData.name, slug: gameData.slug });
-      await env.GAMES_KV.put('games:list', JSON.stringify(games));
+      try {
+        await env.GAMES_KV.put(`game:${gameData.id}`, JSON.stringify(gameData));
+        
+        // Также сохраняем список всех игр
+        const gamesList = await env.GAMES_KV.get('games:list');
+        let games = gamesList ? JSON.parse(gamesList) : [];
+        // Удаляем старую версию если есть
+        games = games.filter(g => g.id !== gameData.id);
+        games.push({ id: gameData.id, name: gameData.name, slug: gameData.slug });
+        await env.GAMES_KV.put('games:list', JSON.stringify(games));
+        
+        savedToKV = true;
+      } catch (e) {
+        console.error('KV save error:', e);
+      }
     }
     
     return new Response(JSON.stringify({
       success: true,
+      savedToKV: savedToKV,
+      message: savedToKV 
+        ? 'Game saved to Cloudflare KV' 
+        : 'Game saved locally (KV not configured)',
       game: {
         id: gameData.id,
         slug: gameData.slug,

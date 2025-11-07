@@ -53,20 +53,21 @@ export async function onRequest(context) {
 }
 
 async function getGameData(gameId, env) {
-  // Попытка получить из KV
+  // Попытка получить из KV (основной источник)
   if (env && env.GAMES_KV) {
     try {
       const data = await env.GAMES_KV.get(`game:${gameId}`);
       if (data) {
-        return JSON.parse(data);
+        const gameData = JSON.parse(data);
+        console.log(`Game ${gameId} loaded from KV`);
+        return gameData;
       }
     } catch (e) {
       console.error('KV error:', e);
     }
   }
   
-  // Fallback: проверяем localStorage через cookie или возвращаем дефолтные данные
-  // Для демо используем данные из примера
+  // Fallback: дефолтные данные для примера
   if (gameId === '1757350') {
     return {
       name: 'TWITCH-PHOBIA',
@@ -81,6 +82,8 @@ async function getGameData(gameId, env) {
     };
   }
   
+  // Игра не найдена
+  console.log(`Game ${gameId} not found in KV`);
   return null;
 }
 
