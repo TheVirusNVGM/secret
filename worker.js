@@ -16,11 +16,15 @@ export default {
     
     // Обработка /app/{id}/{name}/
     if (pathname.startsWith('/app/') && pathname !== '/app') {
+      // Убираем /app/ и слеш в конце
       const pathAfterApp = pathname.replace(/^\/app\//, '').replace(/\/$/, '');
+      
+      // Парсим путь: {id}/{name} или {id}/{name}/...
       const pathMatch = pathAfterApp.match(/^(\d+)\/(.+)$/);
       
       if (pathMatch) {
         const gameId = pathMatch[1];
+        const gameSlug = pathMatch[2];
         
         // Пытаемся получить готовый HTML из KV
         if (env?.GAMES_KV) {
@@ -28,7 +32,10 @@ export default {
             const html = await env.GAMES_KV.get(`game:${gameId}:html`);
             if (html) {
               return new Response(html, {
-                headers: { 'Content-Type': 'text/html; charset=utf-8' },
+                headers: { 
+                  'Content-Type': 'text/html; charset=utf-8',
+                  'Cache-Control': 'public, max-age=3600'
+                },
               });
             }
           } catch (e) {
@@ -40,20 +47,38 @@ export default {
         const gameData = await getGameData(gameId, env);
         
         if (!gameData) {
-          return new Response(`Game not found: ${gameId}`, { status: 404 });
+          return new Response(`Game not found: ${gameId}. Path: ${pathname}`, { 
+            status: 404,
+            headers: { 'Content-Type': 'text/html' }
+          });
         }
         
         // Генерируем HTML
-        const html = generateGamePage(gameData, gameId, pathMatch[2]);
+        const html = generateGamePage(gameData, gameId, gameSlug);
         
         return new Response(html, {
-          headers: { 'Content-Type': 'text/html; charset=utf-8' },
+          headers: { 
+            'Content-Type': 'text/html; charset=utf-8',
+            'Cache-Control': 'public, max-age=3600'
+          },
+        });
+      } else {
+        // Неправильный формат пути
+        return new Response(`Invalid path format: ${pathname}. Expected: /app/{id}/{name}/`, { 
+          status: 404,
+          headers: { 'Content-Type': 'text/html' }
         });
       }
     }
     
-    // Для всех остальных запросов возвращаем null, чтобы Worker обработал их как статические файлы
-    return env.ASSETS.fetch(request);
+    // Для всех остальных запросов обрабатываем как статические файлы
+    // Если есть ASSETS binding, используем его, иначе возвращаем 404
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+    
+    // Если нет ASSETS, возвращаем 404
+    return new Response('Not found', { status: 404 });
   }
 }
 
