@@ -16,4 +16,4 @@ directory = "./"
 # 4. Вставьте ID ниже вместо "your-kv-namespace-id"
 [[kv_namespaces]]
 binding = "GAMES_KV"
-id = "your-kv-namespace-id"
+id = "a5253119de84403abc5ea9e1741f1d57"
