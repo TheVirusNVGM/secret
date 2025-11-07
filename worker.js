@@ -4,6 +4,16 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     
+    // Обработка API запросов
+    if (pathname.startsWith('/api/')) {
+      if (pathname === '/api/save-game' && request.method === 'POST') {
+        return handleSaveGame(request, env);
+      }
+      if (pathname === '/api/get-game' && request.method === 'GET') {
+        return handleGetGame(request, env);
+      }
+    }
+    
     // Обработка /app/{id}/{name}/
     if (pathname.startsWith('/app/') && pathname !== '/app') {
       const pathAfterApp = pathname.replace(/^\/app\//, '').replace(/\/$/, '');
@@ -196,5 +206,120 @@ function escapeHtml(text) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
+}
+
+// Обработка API: сохранение игры
+async function handleSaveGame(request, env) {
+  try {
+    const gameData = await request.json();
+    
+    if (!gameData.name || !gameData.description) {
+      return new Response(JSON.stringify({ error: 'Name and description are required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (!gameData.id) {
+      gameData.id = Math.floor(1000000 + Math.random() * 9000000).toString();
+    }
+    
+    if (!gameData.slug) {
+      gameData.slug = gameData.name.toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    }
+    
+    // Генерируем HTML
+    const html = generateGamePageHTML(gameData);
+    
+    let savedToKV = false;
+    if (env?.GAMES_KV) {
+      try {
+        await env.GAMES_KV.put(`game:${gameData.id}`, JSON.stringify(gameData));
+        await env.GAMES_KV.put(`game:${gameData.id}:html`, html);
+        
+        const gamesList = await env.GAMES_KV.get('games:list');
+        let games = gamesList ? JSON.parse(gamesList) : [];
+        games = games.filter(g => g.id !== gameData.id);
+        games.push({ id: gameData.id, name: gameData.name, slug: gameData.slug });
+        await env.GAMES_KV.put('games:list', JSON.stringify(games));
+        
+        savedToKV = true;
+      } catch (e) {
+        console.error('KV save error:', e);
+      }
+    }
+    
+    return new Response(JSON.stringify({
+      success: true,
+      savedToKV: savedToKV,
+      message: savedToKV ? 'Game saved to Cloudflare KV' : 'Game saved locally (KV not configured)',
+      game: {
+        id: gameData.id,
+        slug: gameData.slug,
+        url: `/app/${gameData.id}/${gameData.slug}/`
+      }
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+// Обработка API: получение игры
+async function handleGetGame(request, env) {
+  const url = new URL(request.url);
+  const gameId = url.searchParams.get('id');
+  
+  if (!gameId) {
+    return new Response(JSON.stringify({ error: 'Game ID is required' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  if (env?.GAMES_KV) {
+    try {
+      const data = await env.GAMES_KV.get(`game:${gameId}`);
+      if (data) {
+        return new Response(data, {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+    } catch (e) {
+      console.error('KV error:', e);
+    }
+  }
+  
+  if (gameId === '1757350') {
+    return new Response(JSON.stringify({
+      id: '1757350',
+      name: 'TWITCH-PHOBIA',
+      slug: 'twitch-phobia',
+      description: 'Psychological horror about streamers trapped inside their own broadcast.',
+      developer: 'Specterworks Interactive',
+      publisher: 'Specterworks Interactive',
+      releaseDate: 'Oct 31, 2025',
+      mainImage: '/assets/images/1.png',
+      screenshots: ['/assets/images/1.png', '/assets/images/2.png', '/assets/images/3.png']
+    }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+  
+  return new Response(JSON.stringify({ error: 'Game not found' }), {
+    status: 404,
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+function generateGamePageHTML(gameData) {
+  return generateGamePage(gameData, gameData.id, gameData.slug);
 }
 
