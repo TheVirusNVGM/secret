@@ -10,9 +10,22 @@ export async function onRequest(context) {
     
     if (pathMatch) {
       const gameId = pathMatch[1];
-      const gameSlug = pathMatch[2];
       
-      // Получаем данные игры
+      // Пытаемся получить готовый HTML из KV
+      if (env?.GAMES_KV) {
+        try {
+          const html = await env.GAMES_KV.get(`game:${gameId}:html`);
+          if (html) {
+            return new Response(html, {
+              headers: { 'Content-Type': 'text/html; charset=utf-8' },
+            });
+          }
+        } catch (e) {
+          console.error('KV get error:', e);
+        }
+      }
+      
+      // Fallback: получаем данные и генерируем HTML
       const gameData = await getGameData(gameId, env);
       
       if (!gameData) {
@@ -20,7 +33,7 @@ export async function onRequest(context) {
       }
       
       // Генерируем HTML
-      const html = generateGamePage(gameData, gameId, gameSlug);
+      const html = generateGamePage(gameData, gameId, pathMatch[2]);
       
       return new Response(html, {
         headers: { 'Content-Type': 'text/html; charset=utf-8' },
