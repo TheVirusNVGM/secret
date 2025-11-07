@@ -3,35 +3,35 @@ export async function onRequest(context) {
   const { request, env, params } = context;
   const url = new URL(request.url);
   
-  // Парсим путь из URL напрямую
-  const pathname = url.pathname;
-  // Убираем /app/ из начала пути
-  const pathAfterApp = pathname.replace(/^\/app\//, '');
+  let gameId, gameSlug;
   
-  // Парсим путь: {id}/{name}/
-  const pathMatch = pathAfterApp.match(/^(\d+)\/([^\/]+)\/?$/);
-  
-  if (!pathMatch) {
-    // Пробуем также без слеша в конце
-    const pathMatch2 = pathAfterApp.match(/^(\d+)\/(.+)$/);
-    if (pathMatch2) {
-      const gameId = pathMatch2[1];
-      const gameSlug = pathMatch2[2];
-      
-      const gameData = await getGameData(gameId, env);
-      if (!gameData) {
-        return new Response('Game not found', { status: 404 });
-      }
-      const html = generateGamePage(gameData, gameId, gameSlug);
-      return new Response(html, {
-        headers: { 'Content-Type': 'text/html; charset=utf-8' },
-      });
+  // Пробуем получить из params (если Cloudflare передает)
+  if (params && params.path) {
+    const pathMatch = params.path.match(/^(\d+)\/([^\/]+)\/?$/);
+    if (pathMatch) {
+      gameId = pathMatch[1];
+      gameSlug = pathMatch[2];
     }
-    return new Response('Invalid game path: ' + pathname, { status: 404 });
   }
   
-  const gameId = pathMatch[1];
-  const gameSlug = pathMatch[2];
+  // Если не получилось из params, парсим из URL
+  if (!gameId) {
+    const pathname = url.pathname;
+    const pathAfterApp = pathname.replace(/^\/app\//, '').replace(/\/$/, '');
+    const pathMatch = pathAfterApp.match(/^(\d+)\/(.+)$/);
+    
+    if (pathMatch) {
+      gameId = pathMatch[1];
+      gameSlug = pathMatch[2];
+    }
+  }
+  
+  if (!gameId || !gameSlug) {
+    return new Response('Invalid game path. Expected: /app/{id}/{name}/', { 
+      status: 404,
+      headers: { 'Content-Type': 'text/html' }
+    });
+  }
   
   // Получаем данные игры
   // В реальном приложении здесь будет запрос к KV или базе данных
