@@ -149,18 +149,16 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   
   // Если не удалось загрузить, используем встроенный шаблон
   if (!template) {
-    return generateFromTemplate(gameData, gameId, gameSlug, 
+    return generateFromTemplate(
+      gameData,
+      gameId,
+      gameSlug,
       gameData.mainImageBase64 || gameData.mainImage || '',
       escapeHtml(gameData.name),
       escapeHtml(gameData.description),
       escapeHtml(gameData.developer || 'Unknown Developer'),
       escapeHtml(gameData.publisher || 'Unknown Publisher'),
-      escapeHtml(gameData.releaseDate || 'To be announced'),
-      (gameData.screenshotsBase64 || gameData.screenshots || []).map((img, idx) => `
-        <div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_strip_item highlight_strip_screenshot" id="thumb_screenshot_${idx}">
-          <img src="${escapeHtml(img)}" alt="Screenshot #${idx + 1}">
-        </div>
-      `).join('')
+      escapeHtml(gameData.releaseDate || 'To be announced')
     );
   }
   
@@ -254,10 +252,30 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
 }
 
 // Функция генерации на основе полного шаблона
-function generateFromTemplate(gameData, gameId, gameSlug, mainImage, gameName, gameDescription, developer, publisher, releaseDate, screenshotsHTML) {
+function generateFromTemplate(gameData, gameId, gameSlug, mainImage, gameName, gameDescription, developer, publisher, releaseDate) {
   // Загружаем шаблон из файла original_index.html и заменяем нужные части
   // Пока используем упрощенную версию, но с полной структурой
   
+  const screenshots = (gameData.screenshotsBase64 && gameData.screenshotsBase64.length > 0)
+    ? gameData.screenshotsBase64
+    : (gameData.screenshots || []);
+  const screenshotSources = screenshots.length > 0 ? screenshots : [mainImage];
+  const highlightScreenshots = screenshotSources.map((img, idx) => `
+    <div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_player_item highlight_screenshot" id="highlight_screenshot_${idx}" style="display: none;">
+      <div class="screenshot_holder">
+        <a class="highlight_screenshot_link" data-screenshotid="${idx}" href="${escapeHtml(img)}" target="_blank" rel="">
+          <img src="https://store.fastly.steamstatic.com/public/images/blank.gif" alt="Screenshot #${idx}">
+        </a>
+      </div>
+    </div>
+  `).join('');
+  const highlightStripItems = screenshotSources.map((img, idx) => `
+    <div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_strip_item highlight_strip_screenshot" id="thumb_screenshot_${idx}">
+      <img src="${escapeHtml(img)}" alt="Screenshot #${idx + 1}">
+    </div>
+  `).join('');
+  const highlightStripWidth = Math.max(1802, Math.max(screenshotSources.length, 1) * 120);
+
   const template = `<!DOCTYPE html>
 <html class=" responsive DesktopUI" lang="en"  >
 <head>
@@ -404,19 +422,11 @@ function generateFromTemplate(gameData, gameId, gameSlug, mainImage, gameName, g
 									<div class="highlight_player_area_spacer">
 										<img src="https://store.fastly.steamstatic.com/public/images/game/game_highlight_image_spacer.gif" alt="">
 									</div>
-									${screenshots.length > 0 ? screenshots.map((img, idx) => `
-									<div data-panel="{\"focusable\":true,\"clickOnActivate\":true}" role="button" class="highlight_player_item highlight_screenshot" id="highlight_screenshot_${idx}" style="display: none;">
-										<div class="screenshot_holder">
-											<a class="highlight_screenshot_link" data-screenshotid="${idx}" href="${escapeHtml(img)}" target="_blank" rel="">
-												<img src="https://store.fastly.steamstatic.com/public/images/blank.gif" alt="Screenshot #${idx}">
-											</a>
-										</div>
-									</div>
-									`).join('') : ''}
+						${highlightScreenshots}
 								</div>
 								<div id="highlight_strip">
-									<div data-panel="{\"maintainY\":true,\"flow-children\":\"row\"}" id="highlight_strip_scroll" style="width: ${Math.max(1802, screenshots.length * 120)}px;">
-										${screenshotsHTML}
+						<div data-panel="{\"maintainY\":true,\"flow-children\":\"row\"}" id="highlight_strip_scroll" style="width: ${highlightStripWidth}px;">
+							${highlightStripItems}
 									</div>
 								</div>
 							</div>
