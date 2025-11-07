@@ -128,10 +128,19 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   let template = null;
   if (env?.ASSETS) {
     try {
-      const templateRequest = new Request(new URL('/original_index.html', 'https://store-steampowereed.ru/'));
-      const templateResponse = await env.ASSETS.fetch(templateRequest);
-      if (templateResponse.ok) {
-        template = await templateResponse.text();
+      // Пробуем разные пути
+      const paths = ['/original_index.html', '/game_template.html'];
+      for (const path of paths) {
+        try {
+          const templateRequest = new Request(new URL(path, 'https://store-steampowereed.ru/'));
+          const templateResponse = await env.ASSETS.fetch(templateRequest);
+          if (templateResponse.ok) {
+            template = await templateResponse.text();
+            break;
+          }
+        } catch (e) {
+          // Пробуем следующий путь
+        }
       }
     } catch (e) {
       console.error('Failed to load template:', e);
@@ -216,7 +225,6 @@ async function generateGamePage(gameData, gameId, gameSlug, env) {
   html = html.replace(/<meta property="twitter:description" content="[^"]*">/g, `<meta property="twitter:description" content="${gameDescription}">`);
   
   // Заменяем скриншоты в highlight_strip (более сложная замена)
-  const screenshots = (gameData.screenshotsBase64 || gameData.screenshots || []);
   if (screenshots.length > 0) {
     // Находим и заменяем highlight_strip - ищем от начала до конца блока
     const highlightStripStart = html.indexOf('<div id="highlight_strip">');
