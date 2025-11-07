@@ -7,3 +7,8 @@ routes = [
 
 [assets]
 directory = "./"
+
+# Раскомментируйте для использования KV (создайте namespace в Cloudflare Dashboard)
+# [[kv_namespaces]]
+# binding = "GAMES_KV"
+# id = "your-kv-namespace-id"
