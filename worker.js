@@ -4,6 +4,18 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     
+    // Тестовый endpoint для проверки работы worker
+    if (pathname === '/test-worker') {
+      return new Response(JSON.stringify({
+        message: 'Worker is working!',
+        pathname: pathname,
+        hasKV: !!env.GAMES_KV,
+        hasAssets: !!env.ASSETS
+      }), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
     // Обработка API запросов
     if (pathname.startsWith('/api/')) {
       if (pathname === '/api/save-game' && request.method === 'POST') {
