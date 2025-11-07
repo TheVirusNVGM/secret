@@ -4,13 +4,14 @@ export default {
     const url = new URL(request.url);
     const pathname = url.pathname;
     
-    // Тестовый endpoint для проверки работы worker
-    if (pathname === '/test-worker') {
+    // Тестовый endpoint для проверки работы worker (проверяем первым)
+    if (pathname === '/test-worker' || pathname === '/test-worker/') {
       return new Response(JSON.stringify({
         message: 'Worker is working!',
         pathname: pathname,
         hasKV: !!env.GAMES_KV,
-        hasAssets: !!env.ASSETS
+        hasAssets: !!env.ASSETS,
+        url: request.url
       }), {
         headers: { 'Content-Type': 'application/json' }
       });
